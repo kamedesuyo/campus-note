@@ -1,28 +1,21 @@
 import { useEffect, useRef, useState } from "react"
 import { v4 as uuidv4 } from 'uuid';
-import { signOut } from 'firebase/auth'
-import { auth } from "../firebase/firebase";
 import { useAuth } from "../context/AuthContext";
+import Header from "../components/Header";
+import PostForm from "../components/PostForm";
+import type { post_data } from "../types/post_data";
+import PostsList from "../components/PostsList";
 
 const WS_URL = "http://localhost:8000/ws"
-
-type post_data = {
-  post_uuid: string,
-  send_user: string,
-  send_user_icon_url: string,
-  message: string
-}
 
 
 function Home() {
 
   const [submitted, setSubmitted] = useState(false)
-  const [inputText, setInputText] = useState("")
   const [posts, setPosts] = useState<post_data[]>([])
   const [error, setError] = useState("")
   const ws = useRef<WebSocket | null>(null)
   const { user } = useAuth()
-  const defaultIcon = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f402.svg";
 
   // ロード時にwsに接続する
   useEffect(() => {
@@ -47,25 +40,18 @@ function Home() {
   }, [])
 
   // 送信処理
-  const sendPost = async () => {
-    // 空文字回避
-    if (inputText.trim() == "") return
-
+  const sendPost = async (inputText: string) => {
     try {
       const newPost: post_data = {
         post_uuid: uuidv4(),
         send_user: user?.displayName ?? "名無し",
-        send_user_icon_url: user?.photoURL ?? defaultIcon,
+        send_user_icon_url: user!.photoURL,
         message: inputText
       }
-
       ws.current?.send(JSON.stringify(newPost))
       setSubmitted(true)
-      setInputText("")
-      // 成功時: 2秒後に送信しましたを消す
-      setTimeout(() => { setSubmitted(false) }, 2000);
+      setTimeout(() => { setSubmitted(false) }, 2000); // 送信成功を2秒後に消す
     } catch (err) {
-      //失敗時: errorを出す
       alert(`送信に失敗しました。接続を確認してください。\n${err}`)
       setError("送信に失敗")
     }
@@ -74,26 +60,11 @@ function Home() {
   return (
     <>
       <div>
-        <header>
-          <p>home</p>
-          <p>{user?.displayName ?? "名無しさん"}</p>
-          <img src={user?.photoURL ?? defaultIcon} alt="userIcon" />
-          <button onClick={() => signOut(auth)}>ログアウト</button>
-        </header>
+        <Header />
 
-        <div id="sendForm">
-          <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} />
-          <button id="sendButton" onClick={sendPost}>send</button>
-          {submitted && <p>送信完了！</p>}
-          {error && <p style={{ color: "red" }}>{error}</p>}
-        </div>
+        <PostForm onSendPost={sendPost} submitted={submitted} error={error} />
 
-        <div id="posts">
-          <h3>投稿一覧</h3>
-          {posts.map((post) => (
-            <p key={post.post_uuid}><img src={post.send_user_icon_url} alt="userIcon" />{post.send_user}: {post.message}</p>
-          ))}
-        </div>
+        <PostsList posts={posts}/>
       </div>
     </>
   )
