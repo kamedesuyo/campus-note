@@ -2,9 +2,9 @@
 OECUメンバーで設計、プロトタイプ開発を行った学内向けSNSアプリケーション
 
 ## 概要
-フロントエンド: react+vite
-バックエンド: python 3.12.4(fastapi)
-DBMS: Postgres(SQLAlchemy) ※alembic
+フロントエンド: react+vite<br>
+バックエンド: python 3.12.4(fastapi)<br>
+DBMS: Postgres(SQLAlchemy) ※alembic<br>
 
 ## 実行方法(開発環境)
 run.batまたはdockerを使用。
